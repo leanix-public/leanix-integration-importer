@@ -1,0 +1,153 @@
+[
+  {
+    "source": "Archer",
+    "mapping": [
+      {
+        "field": "BOA Type",
+        "type": null,
+        "values": [
+          {
+            "from": {
+              "expr": "Access Database"
+            },
+            "to": {
+              "expr": "EUT"
+            }
+          },
+          {
+            "from": {
+              "expr": "Excel Spreadsheet"
+            },
+            "to": {
+              "expr": "EUT"
+            }
+          },
+          {
+            "from": {
+              "expr": "Vendor Application"
+            },
+            "to": {
+              "expr": "SaaS"
+            }
+          }
+        ]
+      },
+      {
+        "field": "Business Function",
+        "type": "BusinessCapability",
+        "values": [
+          {
+            "from": {
+              "expr": "Distribution"
+            },
+            "to": {
+              "expr": "4 Sales / Manage Distribution"
+            }
+          },
+          {
+            "from": {
+              "expr": "Finance - Finance"
+            },
+            "to": {
+              "expr": "10 Finance Management"
+            }
+          },
+          {
+            "from": {
+              "expr": "Finance - Valuation"
+            },
+            "to": {
+              "expr": "10 Finance Management / Financial Accounting"
+            }
+          },
+          {
+            "from": {
+              "expr": "Marketing"
+            },
+            "to": {
+              "expr": "3 Marketing"
+            }
+          },
+          {
+            "from": {
+              "expr": "Operations"
+            },
+            "to": {
+              "expr": "6 Administration"
+            }
+          },
+          {
+            "from": {
+              "expr": "Product"
+            },
+            "to": {
+              "expr": "2 Product Management"
+            }
+          },
+          {
+            "from": {
+              "expr": "Risk"
+            },
+            "to": {
+              "expr": "18 Enterprise Risk Management"
+            }
+          }
+        ]
+      },
+      {
+        "field": "Financial Business Unit",
+        "type": "UserGroup",
+        "values": [
+          {
+            "from": {
+              "expr": "Annuities"
+            },
+            "to": {
+              "expr": "Individual Life / Insurance Operations / Annuity and Life Operations"
+            }
+          },
+          {
+            "from": {
+              "expr": "Corporate"
+            },
+            "to": {
+              "expr": "Chief Administrative Office / Chief Information Office / Corporate Systems"
+            }
+          },
+          {
+            "from": {
+              "expr": "Employee Benefits"
+            },
+            "to": {
+              "expr": "Employee Benefits"
+            }
+          },
+          {
+            "from": {
+              "expr": "Individual Life"
+            },
+            "to": {
+              "expr": "Individual Life"
+            }
+          },
+          {
+            "from": {
+              "expr": "Investment Management"
+            },
+            "to": {
+              "expr": "Investment Management"
+            }
+          },
+          {
+            "from": {
+              "expr": "Retirement"
+            },
+            "to": {
+              "expr": "Retirement"
+            }
+          }
+        ]
+      }
+    ]
+  }
+]

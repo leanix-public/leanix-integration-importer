@@ -1,0 +1,211 @@
+[
+    {
+      "processorType": "inboundFactSheet",
+      "processorName": "Archer Data",
+      "processorDescription": "Imports Applications from Archer export",
+      "type": "Application",
+      "filter": {
+        "type": "Application"
+      },
+      "identifier": {
+        "external": {
+          "id": {
+            "expr": "${content.id}"
+          },
+          "type": {
+            "expr": "externalId"
+          }
+        }
+      },
+      "run": 0,
+      "updates": [
+        {
+          "key": {
+            "expr": "name"
+          },
+          "values": [
+            {
+              "expr": "${data.name}"
+            }
+          ]
+        },
+        {
+          "key": {
+            "expr": "description"
+          },
+          "values": [
+            {
+              "expr": "${data.description}"
+            }
+          ]
+        }
+      ],
+      "logLevel": "debug"
+    },
+    {
+      "processorType": "inboundRelation",
+      "processorName": "Rel from Apps to UserGroup",
+      "processorDescription": "Creates LeanIX Relations between the created or updated Applications and BusinessCapability",
+      "type": "relApplicationToUserGroup",
+      "filter": {
+        "type": "Application"
+      },
+      "from": {
+        "external": {
+          "id": {
+            "expr": "${content.id}"
+          },
+          "type": {
+            "expr": "externalId"
+          }
+        }
+      },
+      "to": {
+        "internal": "${data.organisation}"
+      },
+      "run": 1
+    },
+    {
+      "processorType": "inboundRelation",
+      "processorName": "Rel from Apps to BusinessCapability",
+      "processorDescription": "Creates LeanIX Relations between the created or updated Applications and BusinessCapability",
+      "type": "relApplicationToBusinessCapability",
+      "filter": {
+        "type": "Application"
+      },
+      "from": {
+        "external": {
+          "id": {
+            "expr": "${content.id}"
+          },
+          "type": {
+            "expr": "externalId"
+          }
+        }
+      },
+      "to": {
+        "internal": "${data.function}"
+      },
+      "run": 1
+    },
+    {
+      "processorType": "inboundSubscription",
+      "processorName": "Subscription creation",
+      "processorDescription": "Creates subscriptions",
+      "filter": {
+        "type": "Application"
+      },
+      "identifier": {
+        "external": {
+          "id": {
+            "expr": "${content.id}"
+          },
+          "type": {
+            "expr": "externalId"
+          }
+        }
+      },
+      "run": 1,
+      "updates": [
+        {
+          "key": {
+            "expr": "user"
+          },
+          "values": [
+            {
+              "expr": "${data.owner}"
+            }
+          ]
+        },
+        {
+          "key": {
+            "expr": "subscriptionType"
+          },
+          "values": [
+            {
+              "expr": "OBSERVER"
+            }
+          ]
+        },
+        {
+          "key": {
+            "expr": "subscriptionRoles"
+          },
+          "values": [
+            {
+              "map": [
+                {
+                  "key": "roleName",
+                  "value": "Application Business Owner"
+                },
+                {
+                  "key": "comment",
+                  "value": "This person is the Application Business Owner"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "processorType": "inboundSubscription",
+      "processorName": "Subscription creation",
+      "processorDescription": "Creates subscriptions",
+      "filter": {
+        "type": "Application"
+      },
+      "identifier": {
+        "external": {
+          "id": {
+            "expr": "${content.id}"
+          },
+          "type": {
+            "expr": "externalId"
+          }
+        }
+      },
+      "run": 1,
+      "updates": [
+        {
+          "key": {
+            "expr": "user"
+          },
+          "values": [
+            {
+              "expr": "${data.manager}"
+            }
+          ]
+        },
+        {
+          "key": {
+            "expr": "subscriptionType"
+          },
+          "values": [
+            {
+              "expr": "OBSERVER"
+            }
+          ]
+        },
+        {
+          "key": {
+            "expr": "subscriptionRoles"
+          },
+          "values": [
+            {
+              "map": [
+                {
+                  "key": "roleName",
+                  "value": "Application Business Relationship Manager"
+                },
+                {
+                  "key": "comment",
+                  "value": "This person is the Application Business Relationship Manager"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
