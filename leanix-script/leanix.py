@@ -1,28 +1,20 @@
-from os import environ
 import click
-import datetime
-import logging
 import json
 import datetime
 import requests
-import lxpy
 import pandas as pd
-from string import digits
 
 
+def getApiToken():
+    with open('access.json') as json_file:
+        data = json.load(json_file)
+        return data['apitoken']
 
-config = lxpy.ClientConfiguration(
-    base_url=environ.get('BASE_URL', 'voya.leanix.net'),
-    api_token=environ.get('API_TOKEN', 'p9EEUJORDTAvtmcfcs4ULnVsJ5a9ptxXhbTgmjFx')
-)
 
-auth_url = 'https://' + config.base_url + '/services/mtm/v1/oauth2/token'
-request_url = 'https://' + config.base_url + '/services/integration-api/v1/'
-
-# Get the bearer token - see https://dev.leanix.net/v4.0/docs/authentication
-response = requests.post(auth_url, auth=('apitoken', config.api_token), data={'grant_type': 'client_credentials'})
-response.raise_for_status()
-header = {'Authorization': 'Bearer ' + response.json()['access_token'], 'Content-Type': 'application/json'}
+def getHost():
+    with open('access.json') as json_file:
+        data = json.load(json_file)
+        return data['host']
 
 
 def startRun(run):
@@ -115,7 +107,7 @@ def queryValueOfType(type, value):
 def call(query):
     data = {"query": query}
     json_data = json.dumps(data)
-    response = requests.post(url='https://' + config.base_url + '/services/pathfinder/v1/graphql', headers=header, data=json_data)
+    response = requests.post(url='https://' + getHost() + '/services/pathfinder/v1/graphql', headers=header, data=json_data)
     response.raise_for_status()
     return response.json()
 
@@ -146,6 +138,12 @@ def createContent(data, source):
     print(content)
     return content
 
+#init
+auth_url = 'https://' + getHost() + '/services/mtm/v1/oauth2/token'
+request_url = 'https://' + getHost() + '/services/integration-api/v1/'
+response = requests.post(auth_url, auth=('apitoken', getApiToken()), data={'grant_type': 'client_credentials'})
+response.raise_for_status()
+header = {'Authorization': 'Bearer ' + response.json()['access_token'], 'Content-Type': 'application/json'}
 
 @click.command()
 @click.argument('filename', required=1)
@@ -164,15 +162,6 @@ def main(filename, source):
        if (status(run)['status'] == 'FINISHED'):
            print("The run with the ID: " + run['id'] + " has been executed successfully!")
            break
-
-
-# @click.command()
-# @click.argument('command', required=1)
-# @click.option('--debug/--no-debug', default=False, help="Run in foreground")
-# def test(command, debug):
-#     """ COMMAND: start|stop|restart """
-#     print (command)
-#     print (debug)
 
 
 if __name__ == '__main__':
