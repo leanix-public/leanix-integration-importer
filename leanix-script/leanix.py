@@ -1,7 +1,9 @@
 import click
+import base64
 import json
 import datetime
 import requests
+import sys
 import pandas as pd
 
 
@@ -26,41 +28,50 @@ def status(run):
     return (response.json())
 
 
-def createRun(content):
-    data = {
-        "connectorType": "importData",
-        "connectorId": "archerImport",
-        "connectorVersion": "1.0.0",
-        "lxVersion": "1.0.0",
-        "description": "Imports Applications from Archer export",
-        "processingDirection": "inbound",
-        "processingMode": "partial",
-        "customFields": {},
-        "content": content
-    }
+def createRun(data, source):
+    time = str(datetime.datetime.now().strftime("%Y-%m-%d") + "T00:00:00.000Z")
+    content = []
+    if source == 'Archer':
+        ldif = {
+            "connectorType": "importData",
+            "connectorId": "archerImport",
+            "connectorVersion": "1.0.0",
+            "lxVersion": "1.0.0",
+            "description": "Imports Applications from Archer export",
+            "processingDirection": "inbound",
+            "processingMode": "partial",
+            "customFields": {},
+            "content": content
+        }
+        for obj in data.index:
+            content.append({
+                    "type": "Application",
+                    "id": str(data['BOA ID'][obj]),
+                    "data": {"name": data['BOA Name'][obj],
+                             "owner": data['BOA Owner'][obj] if '@' in str(data['BOA Owner'][obj]) else creatUserId(data['BOA Owner'][obj]),
+                             "organisation": mapData(source, 'Financial Business Unit', data['Financial Business Unit'][obj]) if mapData(source, 'Financial Business Unit', data['Financial Business Unit'][obj]) else '',
+                             "function": mapData(source, 'Business Function', data['Business Function'][obj]) if mapData(source, 'Business Function', data['Business Function'][obj]) else '',
+                             "manager": data['BU BOA Rep'][obj] if '@' in str(data['BU BOA Rep'][obj]) else creatUserId(data['BU BOA Rep'][obj]),
+                             "description": data['BOA Description'][obj],
+                             "status": data['BOA Current Status'][obj],
+                             "type": mapData(source, 'BOA Type', data['BOA Type'][obj]) if mapData(source, 'BOA Type', data['BOA Type'][obj]) else ''}
+                })
+        print('The LDIF file of the current run: ' + str(ldif))
+        response = requests.post(url=request_url + 'synchronizationRuns/', headers=header, data=json.dumps(ldif))
+        return (response.json())
+    else:
+        raise ValueError('No configuration for the source system with name: ' + source + ' found.')
 
-    print(data)
-    response = requests.post(url=request_url + 'synchronizationRuns/', headers=header, data=json.dumps(data))
-    print(response.json())
-    return (response.json())
 
+def createProcessorRun(source):
+    try:
+        with open(source + 'Processor.json') as json_file:
+            processors = json.load(json_file)
+        response = requests.put(url=request_url + 'configurations/', headers=header, data=json.dumps(processors))
+        return response
+    except:
+        raise ValueError('No processor configuration for the source system with name: ' + source + ' found.')
 
-def createProcessorRun(processors):
-    data = {
-        "connectorType": "importData",
-        "connectorId": "archerImport",
-        "connectorVersion": "1.0.0",
-        "processingDirection": "inbound",
-        "processingMode": "partial",
-        "credentials": {
-            "useTechnicalUser": "true"
-        },
-        "processors": processors
-    }
-
-    print(data)
-    response = requests.put(url=request_url + 'configurations/', headers=header, data=json.dumps(data))
-    return response
 
 def getFactSheetsOfType(type):
     query = """
@@ -78,13 +89,14 @@ def getFactSheetsOfType(type):
       }
     }
     """%(type)
-    response = call(query)
+    response = callGraphQL(query)
     return response
 
 
 def mapData(source, fieldName, value):
     with open('dataMapping.json') as json_file:
         mapping = json.load(json_file)
+    targetValue = ""
     for src in mapping:
         if src['source'] == source:
             for map in src['mapping']:
@@ -92,8 +104,7 @@ def mapData(source, fieldName, value):
                     for trans in map['values']:
                         if trans['from']['expr'] == value:
                             targetValue = queryValueOfType(map['type'], trans['to']['expr'])
-                            if targetValue:
-                                return targetValue
+    return targetValue
 
 
 def queryValueOfType(type, value):
@@ -104,7 +115,7 @@ def queryValueOfType(type, value):
             return valueOfType
 
 
-def call(query):
+def callGraphQL(query):
     data = {"query": query}
     json_data = json.dumps(data)
     response = requests.post(url='https://' + getHost() + '/services/pathfinder/v1/graphql', headers=header, data=json_data)
@@ -118,25 +129,6 @@ def creatUserId(name):
     userId = str(fullname[1]).lower().strip() + "." + str(fullname[0]).lower().strip() + postfix
     return userId
 
-def createContent(data, source):
-    time = str(datetime.datetime.now().strftime("%Y-%m-%d") + "T00:00:00.000Z")
-    content = []
-    for obj in data.index:
-        #print(data['BOA ID'][obj])
-        content.append({
-            "type": "Application",
-            "id": str(data['BOA ID'][obj]),
-            "data": {"name": data['BOA Name'][obj],
-                     "owner": data['BOA Owner'][obj] if '@' in str(data['BOA Owner'][obj]) else creatUserId(data['BOA Owner'][obj]),
-                     "organisation": mapData('Archer', 'Financial Business Unit', data['Financial Business Unit'][obj]),
-                     "function": mapData('Archer', 'Business Function', data['Business Function'][obj]),
-                     "manager": data['BU BOA Rep'][obj] if '@' in str(data['BU BOA Rep'][obj]) else creatUserId(data['BU BOA Rep'][obj]),
-                     "description": data['BOA Description'][obj],
-                     "status": data['BOA Current Status'][obj],
-                     "type": mapData('Archer', 'BOA Type', data['BOA Type'][obj])}
-        })
-    print(content)
-    return content
 
 #init
 auth_url = 'https://' + getHost() + '/services/mtm/v1/oauth2/token'
@@ -149,19 +141,18 @@ header = {'Authorization': 'Bearer ' + response.json()['access_token'], 'Content
 @click.argument('filename', required=1)
 @click.option('--source', prompt='Enter the source system: ', default='Archer', help='Enter the source system of the file')
 def main(filename, source):
-    """ COMMAND: start|stop|restart """
-    input = pd.read_excel(filename)
-    data = pd.DataFrame(input)
-    content = createContent(data, source)
-    with open(source + 'Processor.json') as json_file:
-        processors = json.load(json_file)
-    createProcessorRun(processors)
-    run = createRun(content)
-    startRun(run)
-    while (True):
-       if (status(run)['status'] == 'FINISHED'):
-           print("The run with the ID: " + run['id'] + " has been executed successfully!")
-           break
+    try:
+        input = pd.read_excel(filename)
+        data = pd.DataFrame(input)
+        createProcessorRun(source)
+        run = createRun(data, source)
+        startRun(run)
+        while (True):
+           if (status(run)['status'] == 'FINISHED'):
+               print("The run with the ID: " + run['id'] + " has been executed successfully!")
+               break
+    except:
+        print("Unexpected error:", sys.exc_info()[0])
 
 
 if __name__ == '__main__':

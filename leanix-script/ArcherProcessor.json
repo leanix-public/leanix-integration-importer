@@ -1,4 +1,13 @@
-[
+{
+  "connectorType": "importData",
+  "connectorId": "archerImport",
+  "connectorVersion": "1.0.0",
+  "processingDirection": "inbound",
+  "processingMode": "partial",
+  "credentials": {
+    "useTechnicalUser": "true"
+  },
+  "processors": [
     {
       "processorType": "inboundFactSheet",
       "processorName": "Archer Data",
@@ -113,7 +122,7 @@
           },
           "values": [
             {
-              "expr": "${data.owner}"
+              "expr": "${integration.valueOfForEach}"
             }
           ]
         },
@@ -146,7 +155,8 @@
             }
           ]
         }
-      ]
+      ],
+      "forEach": "${helper:toList(data.owner.split(';'))}"
     },
     {
       "processorType": "inboundSubscription",
@@ -173,7 +183,7 @@
           },
           "values": [
             {
-              "expr": "${data.manager}"
+              "expr": "${integration.valueOfForEach}"
             }
           ]
         },
@@ -206,6 +216,11 @@
             }
           ]
         }
-      ]
+      ],
+      "forEach": "${helper:toList(data.manager.split(';'))}"
     }
-  ]
+  ],
+  "credentials": {
+    "useTechnicalUser": true
+  }
+}
