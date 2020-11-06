@@ -1,5 +1,4 @@
 import click
-import base64
 import json
 import datetime
 import requests
@@ -28,6 +27,7 @@ def status(run):
     return (response.json())
 
 
+#Need extension when adding new sources
 def createRun(data, source):
     time = str(datetime.datetime.now().strftime("%Y-%m-%d") + "T00:00:00.000Z")
     content = []
