@@ -12,6 +12,12 @@ def getApiToken():
         return data['apitoken']
 
 
+def getDomain():
+    with open('access.json') as json_file:
+        data = json.load(json_file)
+        return data['domain']
+
+
 def getHost():
     with open('access.json') as json_file:
         data = json.load(json_file)
@@ -124,7 +130,7 @@ def callGraphQL(query):
 
 
 def creatUserId(name):
-    postfix = "@voya.com"
+    postfix = "@" + getDomain()
     fullname = name.split(",")
     userId = str(fullname[1]).lower().strip() + "." + str(fullname[0]).lower().strip() + postfix
     return userId
